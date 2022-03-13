@@ -53,9 +53,11 @@ class AtCoderAlert:
             sleep(self.UNIT_SEC)
     
     def every_unit(self):
-        if self.prev.date() < date.today():
+        now = datetime.now()
+        if self.prev.date() < now.date():
             self.every_day()
-        self.check_queue()
+        self.check_queue(now)
+        self.prev = now
         self.write_queue()
     
     def every_day(self):
@@ -72,8 +74,8 @@ class AtCoderAlert:
             except Exception as e:
                 print(e)
     
-    def check_queue(self):
-        t = datetime.now().timestamp()
+    def check_queue(self, now):
+        t = now.timestamp()
         while self.jobs and (con:=min(self.jobs)).timestamp < t + 30:
             self.jobs.remove(con)
             self.send_message(con)
