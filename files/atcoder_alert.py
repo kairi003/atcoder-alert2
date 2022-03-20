@@ -4,6 +4,7 @@ import json
 import os
 import re
 from datetime import datetime, date
+import sys
 from urllib.parse import urljoin
 from dataclasses import dataclass, asdict
 import requests
@@ -11,7 +12,6 @@ from bs4 import BeautifulSoup, Tag
 from time import sleep
 from pathlib import Path
 
-WEBHOOK = os.environ['WEBHOOK']
 QUEUE = 'atcoder_alert.json'
 
 @dataclass(frozen=True)
@@ -41,11 +41,12 @@ class Contest:
 
 
 class AtCoderAlert:
-    UNIT_SEC = 60
+    UNIT_SEC = 10
 
-    def __init__(self):
+    def __init__(self, webhook:str):
         self.jobs:set[Contest] = set()
         self.prev = datetime.fromtimestamp(0)
+        self.webhook = webhook
     
     def run(self):
         while True:
@@ -74,9 +75,9 @@ class AtCoderAlert:
             except Exception as e:
                 print(e)
     
-    def check_queue(self, now):
+    def check_queue(self, now: datetime):
         t = now.timestamp()
-        while self.jobs and (con:=min(self.jobs)).timestamp < t + 30:
+        while self.jobs and (con:=min(self.jobs)).timestamp < t + 30 * 60:
             self.jobs.remove(con)
             self.send_message(con)
     
@@ -84,12 +85,12 @@ class AtCoderAlert:
         body = {
             'content': f'<@&936589677132124160> あと30分で {con.title} が始まります\n{con.url}'
         }
-        requests.post(WEBHOOK, json=body)
+        requests.post(self.webhook, json=body)
 
     def write_queue(self):
         s = json.dumps(list(map(asdict, sorted(self.jobs))), indent=2)
         Path(QUEUE).write_text(s)
 
 if __name__ == '__main__':
-    ac_alert = AtCoderAlert()
+    ac_alert = AtCoderAlert(sys.argv[1])
     ac_alert.run()

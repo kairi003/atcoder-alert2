@@ -8,4 +8,4 @@ ADD files/* /root/
 RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install -r /root/requirements.txt
 
-CMD ["python3", "/root/atcoder_alert.py"]
+ENTRYPOINT ["python3", "/root/atcoder_alert.py"]
